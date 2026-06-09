@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional
 
 from sqlalchemy import delete as sa_delete
@@ -88,9 +88,11 @@ def _check_watch(w: Watch) -> None:
         ))
 
         if quote.price <= db_watch.max_price:
-            cooldown = timedelta(hours=settings.ALERT_COOLDOWN_HOURS)
-            now = _utcnow()
-            if db_watch.last_alert_at and now - db_watch.last_alert_at < cooldown:
+            # Only alert if this is a new lower price than what we last alerted at
+            if (
+                db_watch.last_alert_price is not None
+                and quote.price >= db_watch.last_alert_price
+            ):
                 s.commit()
                 return
 
@@ -108,7 +110,9 @@ def _check_watch(w: Watch) -> None:
                 f"Depart {quote.depart_date}{ret_str}\n"
                 f"Book: {quote.deeplink}",
             )
+            now = _utcnow()
             db_watch.last_alert_at = now
+            db_watch.last_alert_price = quote.price
             s.add(db_watch)
             logger.info(
                 "Alert sent for watch #%d: %s→%s @ %s %s",

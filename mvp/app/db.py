@@ -28,6 +28,7 @@ class Watch(SQLModel, table=True):
     adults: int = 1
     active: bool = Field(default=True, index=True)
     last_alert_at: Optional[datetime] = None
+    last_alert_price: Optional[float] = None
     last_polled_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=_utcnow)
 

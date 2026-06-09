@@ -6,6 +6,6 @@
     { "src": "/(.*)", "dest": "api/index.py" }
   ],
   "crons": [
-    { "path": "/cron/poll", "schedule": "0 2 * * *" }
+    { "path": "/cron/poll", "schedule": "0 2,14 * * *" }
   ]
 }
