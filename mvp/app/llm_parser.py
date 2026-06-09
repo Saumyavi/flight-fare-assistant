@@ -87,9 +87,12 @@ def generate_reply(text: str) -> str:
                 {"role": "user", "content": text.strip()[:2000]},
             ],
             temperature=0.7,
-            max_tokens=120,
         )
-        return resp.choices[0].message.content.strip() or FALLBACK_REPLY
+        content = resp.choices[0].message.content
+        if content:
+            return content.strip()
+        logger.warning("generate_reply: empty response from model")
+        return FALLBACK_REPLY
     except Exception as e:
         logger.error("generate_reply failed: %s", e)
         return FALLBACK_REPLY
