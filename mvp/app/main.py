@@ -1,6 +1,7 @@
 """FastAPI app: Twilio webhook + health/cron/debug endpoints."""
 from __future__ import annotations
 
+import html
 import logging
 from contextlib import asynccontextmanager
 
@@ -12,7 +13,6 @@ from .config import settings
 from .db import get_session, init_db
 from .handlers import handle_inbound
 from .poll import poll_once
-from .whatsapp import send_whatsapp
 
 logging.basicConfig(
     level=logging.INFO,
@@ -62,8 +62,7 @@ async def twilio_webhook(
 ):
     await _verify_twilio_signature(request)
     reply = handle_inbound(From, Body)
-    send_whatsapp(From, reply)
-    return "<Response/>"
+    return f"<?xml version='1.0' encoding='UTF-8'?><Response><Message>{html.escape(reply)}</Message></Response>"
 
 
 @app.post("/cron/poll")

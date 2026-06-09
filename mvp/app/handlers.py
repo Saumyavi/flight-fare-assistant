@@ -11,7 +11,7 @@ from sqlmodel import func, select
 from .airports import resolve_iata
 from .config import settings
 from .db import User, Watch, get_session
-from .llm_parser import ParsedWatch, parse_message
+from .llm_parser import ParsedWatch, generate_reply, parse_message
 
 logger = logging.getLogger(__name__)
 
@@ -99,11 +99,7 @@ def handle_inbound(whatsapp_number: str, text: str) -> str:
     if parsed.intent == "create_watch":
         return _create_watch(user.id, parsed)
 
-    return (
-        "Sorry, I couldn't understand that. Try:\n"
-        "  _DEL to GOA under 4000 between 5 and 15 June_\n"
-        "Or send *HELP*."
-    )
+    return generate_reply(text)
 
 
 def _mutate_watch(user_id: int, p: ParsedWatch) -> str:
@@ -184,9 +180,14 @@ def _create_watch(user_id: int, p: ParsedWatch) -> str:
         s.add(w)
         s.commit()
         s.refresh(w)
+        watch_id = w.id
+        max_price = int(w.max_price)
+        currency = w.currency
+        depart_from = w.depart_from
+        depart_to = w.depart_to
 
     return (
-        f"✅ Watching {origin}→{dest} for ≤ {int(w.max_price)} {w.currency}.\n"
-        f"Departure window: {w.depart_from} → {w.depart_to}.\n"
-        f"I'll ping you when fares drop. (watch #{w.id})"
+        f"✅ Watching {origin}→{dest} for ≤ {max_price} {currency}.\n"
+        f"Departure window: {depart_from} → {depart_to}.\n"
+        f"I'll ping you when fares drop. (watch #{watch_id})"
     )

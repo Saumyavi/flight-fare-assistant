@@ -60,6 +60,41 @@ Rules:
 """
 
 
+FALLBACK_REPLY = (
+    "Sorry, I didn't quite get that. Try:\n"
+    "  _DEL to GOA under 4000, 5-15 June_\n"
+    "Or send *HELP* to see all commands."
+)
+
+CHAT_SYSTEM_PROMPT = (
+    "You are a friendly WhatsApp flight fare alert bot. "
+    "You help users track flight prices and get alerted when fares drop. "
+    "The user sent something you couldn't parse as a flight watch command. "
+    "Reply naturally and helpfully in 1-2 short sentences. "
+    "Guide them to send something like: 'DEL to GOA under 4000 5-15 June', "
+    "or use commands: LIST, STOP <id>, PAUSE <id>, RESUME <id>, HELP. "
+    "Keep it conversational — no markdown, no bullet points."
+)
+
+
+def generate_reply(text: str) -> str:
+    """Generate a natural conversational reply for unrecognised messages."""
+    try:
+        resp = _client_lazy().chat.completions.create(
+            model=settings.OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": CHAT_SYSTEM_PROMPT},
+                {"role": "user", "content": text.strip()[:2000]},
+            ],
+            temperature=0.7,
+            max_tokens=120,
+        )
+        return resp.choices[0].message.content.strip() or FALLBACK_REPLY
+    except Exception as e:
+        logger.error("generate_reply failed: %s", e)
+        return FALLBACK_REPLY
+
+
 def parse_message(text: str) -> ParsedWatch:
     today = date.today().isoformat()
     msgs = [
