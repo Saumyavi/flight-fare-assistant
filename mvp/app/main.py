@@ -6,7 +6,7 @@ import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Form, HTTPException, Request
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from sqlalchemy import text
 
 from .config import settings
@@ -54,7 +54,7 @@ def health():
         return JSONResponse({"ok": False, "db": False}, status_code=503)
 
 
-@app.post("/twilio/whatsapp", response_class=PlainTextResponse)
+@app.post("/twilio/whatsapp")
 async def twilio_webhook(
     request: Request,
     From: str = Form(...),
@@ -62,7 +62,8 @@ async def twilio_webhook(
 ):
     await _verify_twilio_signature(request)
     reply = handle_inbound(From, Body)
-    return f"<?xml version='1.0' encoding='UTF-8'?><Response><Message>{html.escape(reply)}</Message></Response>"
+    twiml = f"<?xml version='1.0' encoding='UTF-8'?><Response><Message>{html.escape(reply)}</Message></Response>"
+    return Response(content=twiml, media_type="text/xml")
 
 
 @app.post("/cron/poll")
