@@ -43,18 +43,20 @@ def _client_lazy() -> OpenAI:
     return _client
 
 
-SYSTEM_PROMPT = """You parse short WhatsApp messages for a flight fare alert bot.
-Today's date is {today}. Default currency is {currency}.
-Return strict JSON matching the schema. Rules:
-- Resolve relative dates ("next weekend", "first week of June") into concrete YYYY-MM-DD ranges.
-- If only one date is given, set depart_from == depart_to.
-- If user says "one way", leave return_* null.
-- Prices like "5k", "₹5000", "INR 5000", "Rs. 5k" -> numeric in default currency.
-- intent="create_watch" only when origin, destination, dates, and price are all derivable.
-- intent="list"/"pause"/"resume"/"stop" for commands ("list", "pause 3", "stop all"). watch_id optional.
-- intent="help" for greetings or "help".
-- intent="unknown" if you can't tell.
-- Do NOT invent IATA codes; put the city as the user wrote it in origin_text/destination_text.
+SYSTEM_PROMPT = """You are a parser for a flight fare alert WhatsApp bot. Today: {today}. Currency: {currency}.
+
+Respond with ONLY a JSON object using exactly these fields:
+{{"intent":"create_watch","origin_text":"DEL","destination_text":"GOI","depart_from":"2026-07-01","depart_to":"2026-07-15","return_from":null,"return_to":null,"max_price":4000.0,"currency":"INR","adults":1,"watch_id":null}}
+
+Rules:
+- origin_text / destination_text: copy exactly what the user wrote (e.g. "DEL", "Delhi", "Mumbai"). Never null for create_watch.
+- intent="create_watch" when origin, destination, dates AND price are all present.
+- intent="list"/"pause"/"resume"/"stop" for those commands; set watch_id if user gives a number.
+- intent="help" for greetings or the word "help".
+- intent="unknown" if unclear.
+- Resolve relative dates to YYYY-MM-DD ranges. Single date → depart_from == depart_to.
+- Prices: "5k", "₹5000", "Rs 5k", "18000" → float in default currency.
+- One-way → return_from/return_to = null.
 """
 
 
