@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class ParsedWatch(BaseModel):
-    intent: Literal["create_watch", "list", "pause", "resume", "stop", "help", "unknown"]
+    intent: Literal["create_watch", "list", "pause", "resume", "stop", "unknown"]
     origin_text: Optional[str] = Field(None, description="City or airport name as the user wrote it")
     destination_text: Optional[str] = None
     depart_from: Optional[date] = None
@@ -52,8 +52,7 @@ Rules:
 - origin_text / destination_text: copy exactly what the user wrote (e.g. "DEL", "Delhi", "Mumbai"). Never null for create_watch.
 - intent="create_watch" when origin, destination, dates AND price are all present.
 - intent="list"/"pause"/"resume"/"stop" for those commands; set watch_id if user gives a number.
-- intent="help" for greetings or the word "help".
-- intent="unknown" if unclear.
+- intent="unknown" for greetings, casual chat, help requests, or anything that isn't a clear flight/command intent.
 - Resolve relative dates to YYYY-MM-DD ranges. Single date → depart_from == depart_to.
 - Prices: "5k", "₹5000", "Rs 5k", "18000" → float in default currency.
 - One-way → return_from/return_to = null.
